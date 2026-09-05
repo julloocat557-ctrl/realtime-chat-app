@@ -5,6 +5,20 @@
   background: #fff;
 }
 
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body.dark-mode {
+  background: #0a0a0a;
+  color: #fff;
+}
+
 .app-container {
   display: flex;
   flex: 1;
@@ -12,12 +26,18 @@
 }
 
 .sidebar {
-  width: 300px;
-  background: #f8f9fa;
-  border-right: 1px solid #e0e0e0;
+  width: 360px;
+  background: #fff;
+  border-right: 1px solid #e5e5e5;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+}
+
+body.dark-mode .sidebar {
+  background: #111;
+  border-right-color: #262626;
 }
 
 .main-content {
@@ -25,6 +45,11 @@
   display: flex;
   flex-direction: column;
   background: #fff;
+  overflow: hidden;
+}
+
+body.dark-mode .main-content {
+  background: #0a0a0a;
 }
 
 .welcome-screen {
@@ -33,107 +58,50 @@
   justify-content: center;
   align-items: center;
   height: 100%;
-  color: #999;
+  color: #65676b;
+  text-align: center;
+}
+
+body.dark-mode .welcome-screen {
+  color: #b0b3b1;
+}
+
+.welcome-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  opacity: 0.8;
 }
 
 .welcome-screen h2 {
   font-size: 32px;
-  margin-bottom: 10px;
+  color: #000;
+  margin: 0 0 8px 0;
+  font-weight: 500;
 }
 
-/* Login Page */
-.login-page {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+body.dark-mode .welcome-screen h2 {
+  color: #fff;
 }
 
-.login-container {
-  background: white;
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 400px;
+.welcome-screen p {
+  font-size: 15px;
+  color: #65676b;
+  margin: 0;
 }
 
-.login-container h1 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 10px;
-  font-size: 28px;
+body.dark-mode .welcome-screen p {
+  color: #b0b3b1;
 }
 
-.login-container p {
-  text-align: center;
-  color: #666;
-  margin-bottom: 30px;
-}
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e5e5e5;
+  }
 
-.login-container input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 20px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 16px;
-}
-
-.avatar-selector {
-  margin-bottom: 20px;
-}
-
-.avatar-selector p {
-  font-size: 14px;
-  margin-bottom: 10px;
-  text-align: left;
-}
-
-.avatar-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.avatar-btn {
-  padding: 10px;
-  font-size: 24px;
-  border: 2px solid #ddd;
-  border-radius: 5px;
-  cursor: pointer;
-  background: white;
-  transition: all 0.3s;
-}
-
-.avatar-btn:hover {
-  border-color: #667eea;
-  transform: scale(1.1);
-}
-
-.avatar-btn.selected {
-  border-color: #667eea;
-  background: #f0f4ff;
-}
-
-.login-btn {
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.login-btn:hover {
-  transform: translateY(-2px);
-}
-
-.login-btn:active {
-  transform: translateY(0);
+  .app-container {
+    flex-direction: column;
+  }
 }

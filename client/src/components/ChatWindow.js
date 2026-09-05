@@ -1,22 +1,25 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './ChatWindow.css';
 
-function ChatWindow({ currentUser, selectedUser, socket, messages }) {
+function ChatWindow({ currentUser, selectedUser, socket, messages, setMessages }) {
   const [messageText, setMessageText] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
+  const conversationKey = `${currentUser.userId}-${selectedUser.userId}`;
+  const reverseConversationKey = `${selectedUser.userId}-${currentUser.userId}`;
+
   useEffect(() => {
-    // Filter messages for this conversation
-    const filteredMessages = messages.filter(
-      m => (m.fromUserId === currentUser.userId && m.toUserId === selectedUser.username) ||
-            (m.fromUserId === selectedUser.username && m.toUserId === currentUser.userId)
-    );
-    setChatMessages(filteredMessages);
+    const allMessages = [
+      ...(messages[conversationKey] || []),
+      ...(messages[reverseConversationKey] || [])
+    ].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    setChatMessages(allMessages);
     scrollToBottom();
-  }, [messages, selectedUser, currentUser]);
+  }, [messages, conversationKey, reverseConversationKey]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -27,57 +30,82 @@ function ChatWindow({ currentUser, selectedUser, socket, messages }) {
     if (messageText.trim()) {
       const messageData = {
         fromUserId: currentUser.userId,
-        toUserId: selectedUser.username,
+        toUserId: selectedUser.userId,
         message: messageText,
         messageId: `msg_${Date.now()}`,
-        timestamp: new Date().toLocaleTimeString()
+        timestamp: new Date().toISOString()
       };
+
       socket.emit('send_message', messageData);
-      setChatMessages(prev => [...prev, { ...messageData, fromUserId: currentUser.userId }]);
+
+      setMessages(prev => ({
+        ...prev,
+        [conversationKey]: [...(prev[conversationKey] || []), messageData]
+      }));
+
       setMessageText('');
       setIsTyping(false);
-      socket.emit('stop_typing', { fromUserId: currentUser.userId, toUserId: selectedUser.username });
+      socket.emit('stop_typing', { fromUserId: currentUser.userId, toUserId: selectedUser.userId });
     }
   };
 
   const handleTyping = () => {
-    socket.emit('typing', { fromUserId: currentUser.userId, toUserId: selectedUser.username });
+    socket.emit('typing', { fromUserId: currentUser.userId, toUserId: selectedUser.userId });
     setIsTyping(true);
 
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit('stop_typing', { fromUserId: currentUser.userId, toUserId: selectedUser.username });
+      socket.emit('stop_typing', { fromUserId: currentUser.userId, toUserId: selectedUser.userId });
       setIsTyping(false);
     }, 3000);
+  };
+
+  const formatTime = (timestamp) => {
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '';
+    }
   };
 
   return (
     <div className="chat-window">
       <div className="chat-header">
         <div className="chat-header-info">
-          <span className="chat-avatar">{selectedUser.avatar || '👤'}</span>
+          <span className="chat-avatar">{selectedUser.avatar}</span>
           <div>
             <h2>{selectedUser.username}</h2>
-            <span className="status-indicator">🟢 Online</span>
+            <span className="chat-status">Active now</span>
           </div>
+        </div>
+        <div className="chat-header-actions">
+          <button className="header-btn" title="Call">☎️</button>
+          <button className="header-btn" title="Video call">📹</button>
+          <button className="header-btn" title="Info">ℹ️</button>
         </div>
       </div>
 
       <div className="messages-container">
         {chatMessages.length === 0 ? (
           <div className="no-messages">
-            <p>👋 Start a conversation with {selectedUser.username}!</p>
+            <div className="no-messages-icon">{selectedUser.avatar}</div>
+            <h3>No messages yet</h3>
+            <p>Start a conversation with {selectedUser.username}!</p>
           </div>
         ) : (
-          chatMessages.map((msg, index) => (
-            <div
-              key={index}
-              className={`message ${msg.fromUserId === currentUser.userId ? 'sent' : 'received'}`}
-            >
-              <div className="message-content">{msg.message}</div>
-              <span className="message-time">{msg.timestamp}</span>
-            </div>
-          ))
+          chatMessages.map((msg, index) => {
+            const isSent = msg.fromUserId === currentUser.userId;
+            return (
+              <div key={index} className={`message ${isSent ? 'sent' : 'received'}`}>
+                {!isSent && <span className="message-avatar">{selectedUser.avatar}</span>}
+                <div className="message-bubble-wrapper">
+                  <div className="message-bubble">{msg.message}</div>
+                  <span className="message-time">{formatTime(msg.timestamp)}</span>
+                </div>
+              </div>
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -85,14 +113,19 @@ function ChatWindow({ currentUser, selectedUser, socket, messages }) {
       <form className="message-input" onSubmit={handleSendMessage}>
         <input
           type="text"
-          placeholder="Type a message..."
+          placeholder="Aa"
           value={messageText}
           onChange={(e) => {
             setMessageText(e.target.value);
             handleTyping();
           }}
+          className="message-text-input"
         />
-        <button type="submit">Send</button>
+        {messageText.trim() ? (
+          <button type="submit" className="send-btn">📤</button>
+        ) : (
+          <button type="button" className="action-btn">😊</button>
+        )}
       </form>
     </div>
   );
